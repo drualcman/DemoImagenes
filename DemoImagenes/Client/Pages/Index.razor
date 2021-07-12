@@ -1,0 +1,130 @@
+﻿@page "/"
+@inject DBContext Cnn
+
+<h1>Subir Imagenes</h1>
+
+<p>@Messages</p>
+
+<InputFileExtended @ref="UploadFiles"                   
+                   TargetToPostFile="files/a/disco" ShowPreview="true" IsImage="true" ButtonShow="show"
+                   OnSave="Guardar" OnError="Error" OnUploadedFile="UploadFile" OnUploadComleted="Completed" MultiFile="true">
+    <ButtonContent>Guarda a Disco</ButtonContent>
+</InputFileExtended>
+
+<ul class="gallery">
+
+    @if (Files is null)
+    {
+        <li>Gallery loading...</li>
+    }
+    else if (Files.Any())
+    {
+        foreach (var file in Files)
+        {
+            <li>
+                <div class="row">
+                    <div class="col image">
+                        <img src="@file.FileBytes" class="img-fluid" />
+                        <div class="data">
+                            <span class="file-id"><strong>File Id: </strong>@file.Id</span>
+                            <span>Name: @file.FileName</span>
+                        </div>
+                        <span class="btn btn-outline-danger" @onclick="() => Remove(file.Id)">X</span>
+                    </div>
+                </div>
+            </li>
+        }
+    }
+    else
+    {
+        <li>Gallery is empty.</li>
+    }
+</ul>
+
+@code{
+    bool show = false;
+
+    void ShowDiallog()
+    {
+        show = true;
+    }
+
+    string Messages;
+
+    List<FileStore> Files;
+    InputFileExtended UploadFiles;
+
+    async void Guardar(HttpResponseMessage result)
+    {
+        if (result.IsSuccessStatusCode)
+        {
+            show = false;
+            Messages = "Imagen subida.";
+        }
+        else
+        {
+            Messages = "No se pudo subir.";
+        }
+        AddToDb();
+    }
+
+    async void AddToDb()
+    {
+        FileStore file = new FileStore();
+
+        foreach (var File in UploadFiles.Files)
+        {
+            file.Id = File.FileId.ToString();
+            file.FileName = File.Name;
+            file.FileSize = File.Size;
+            file.FileBytes = File.ToImageHTML;
+            CommandResponse response = await Cnn.FilesStore.AddAsync(file);
+            if (response.Result)
+            {
+                Messages += $" Imagen {File.Name} guardada en la base de datos local. Resultado perfecto.";
+            }
+            else Messages += $" Imagen {File.Name} no se pudo guardar en la base de datos local {response.Message}. Resultado casi perfecto.";
+        }
+
+        await LoadGallery();
+        UploadFiles.Clean();
+        StateHasChanged();
+    }
+
+    void Completed(FilesUploadEventArgs e)
+    {
+        Messages = $"{e.Count} files with total {e.Size} bytes {e.Action}";
+    }
+
+    void UploadFile(FileUploadEventArgs e)
+    {
+        Messages = $"File {e.File.Name} with size {e.File.Size} {e.Action}";
+        show = true;
+    }
+
+    void Error(ArgumentException e)
+    {
+        Messages = e.Message;
+    }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadGallery();
+    }
+
+    async Task LoadGallery()
+    {
+        Files = await Cnn.FilesStore.SelectAsync();
+    }
+
+    async void Remove(string id)
+    {
+        CommandResponse response = await Cnn.FilesStore.DeleteAsync(id);
+        if (response.Result) Messages = $"File {id} deleted";
+        else Messages = $"Can't delete file {id}";
+        await LoadGallery();
+        StateHasChanged();
+    }
+
+}

@@ -1,0 +1,65 @@
+﻿<h3>Component</h3>
+@inject HttpClient Client;
+
+
+<InputFile multiple OnChange="UploadFiles.UploadFile" />
+@Messages
+
+@if (UploadFiles.Count > 0)
+{
+    <ul>
+        @foreach (var item in UploadFiles)
+        {
+            <li>
+                @item.Name
+
+            </li>
+
+        }
+    </ul>
+}
+<button class="btn btn-primary" @onclick="GuardarEnDisco">Subir Imagen</button>
+<button class="btn btn-primary" @onclick="GuardarEnDb">Guardar Imagen en DB</button>
+
+@code{
+    public byte[] FileByte = null;
+    string Messages;
+
+    InputFileHandler UploadFiles;
+
+    protected override void OnInitialized()
+    {
+        UploadFiles = new InputFileHandler(Client, 5, 5120000);
+        UploadFiles.OnUploadFile += UploadFileDone;
+        UploadFiles.OnUploaded += AllGood;
+        UploadFiles.OnUploadError += Error;
+    }
+
+    void Error(object sernder, ArgumentException e)
+    {
+        Messages = $"Error {e.Message}";
+    }
+
+    void AllGood(object sender, FilesUploadEventArgs e)
+    {
+        Messages = $"Archivos Guardados {e.Count} ({e.Size})";
+    }
+
+    async void UploadFileDone(object sender, FileUploadEventArgs e)
+    {
+        Messages = $"Archivo cargado {e.File.Name} ({e.File.Size})";
+        FileByte = await e.File.FileStreamContent.ReadAsByteArrayAsync();
+        StateHasChanged();
+    }
+
+    async Task GuardarEnDisco() => await SubirArchivo("disco");
+    async Task GuardarEnDb() => await SubirArchivo("db");
+
+
+    async Task SubirArchivo(string destino)
+    {
+        bool result =
+            await UploadFiles.UploadAsync<bool>($"files/a/{destino}");
+    }
+}
+
