@@ -1,16 +1,22 @@
 ﻿@page "/"
 @inject DBContext Cnn
+@inject IJSRuntime js  
+@implements IDisposable
 
 <h1>Subir Imagenes</h1>
 
 <p>@Messages</p>
 
-<InputFileExtended @ref="UploadFiles"                   
+<InputFileExtended @ref="UploadFiles"
                    TargetToPostFile="files/a/disco" ShowPreview="true" IsImage="true" ButtonShow="show"
                    OnSave="Guardar" OnError="Error" OnUploadedFile="UploadFile" OnUploadComleted="Completed" MultiFile="true">
     <ButtonContent>Guarda a Disco</ButtonContent>
 </InputFileExtended>
 
+
+<button class="btn btn-success" type="button" @onclick="Pay">Pay here</button>
+
+<div id="paypal-button-container"></div>
 <ul class="gallery">
 
     @if (Files is null)
@@ -41,7 +47,22 @@
     }
 </ul>
 
-@code{
+@code{ 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await js.InvokeVoidAsync("LocadPaypal", 500, 50);
+        }
+    }
+
+
+    async void Pay()
+    {
+        await js.InvokeVoidAsync("LocadPaypal", 100, 10);
+        StateHasChanged();
+    }
+
     bool show = false;
 
     void ShowDiallog()
@@ -54,7 +75,7 @@
     List<FileStore> Files;
     InputFileExtended UploadFiles;
 
-    async void Guardar(HttpResponseMessage result)
+    void Guardar(HttpResponseMessage result)
     {
         if (result.IsSuccessStatusCode)
         {
@@ -125,6 +146,14 @@
         else Messages = $"Can't delete file {id}";
         await LoadGallery();
         StateHasChanged();
+    }
+
+    async void IDisposable.Dispose()
+    {
+        Console.WriteLine("haciendo dispose");
+        await js.InvokeVoidAsync("alert", "adios");
+        UploadFiles?.Dispose();
+        Console.WriteLine("finalizando dispose");
     }
 
 }

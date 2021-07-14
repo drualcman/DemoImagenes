@@ -9,10 +9,29 @@
     <link href="css/bootstrap/bootstrap.min.css" rel="stylesheet" />
     <link href="css/app.css" rel="stylesheet" />
     <link href="DemoImagenes.Client.styles.css" rel="stylesheet" />
+    <style>
+        #app{
+            width: 50%;
+            float: left;
+            margin: 0;
+        }
+        .mi-modal {
+            width: 50%;
+            float: right;
+            margin: 0;
+            z-index: 9999;
+            min-height: 250px;
+        }
+    </style>
+    <script src="https://www.paypalobjects.com/api/checkout.js"></script>
 </head>
 
 <body>
     <div id="app">Loading...</div>
+
+    <div class="mi-modal" id="vntModal" >
+        <p>paypal iba aqui antes</p>
+    </div>
 
     <div id="blazor-error-ui">
         An unhandled error has occurred.
@@ -22,6 +41,117 @@
     <script src="_framework/blazor.webassembly.js"></script>
     <script src="_content/DrUalcman-BlazorIndexedDb/jsDB.js"></script>
     <script src="_content/DrUalcman-BlazorIndexedDb/MyDbJs.js"></script>
+    <script>
+        function LocadPaypal(s, t) {
+            subtotal = s;
+            tax = t;
+            total = s + t + shipping;
+
+            var enviroment = 'sandbox';
+            paypal.Button.render({
+                // Set your environment
+                env: enviroment, // sandbox | production
+                client: {
+                    sandbox: 'Aa76L3wavGYhPwHk3VqZ3szCgOkoOp2ibrqcvXf2J0Rh2lxKHM1Mgft35khgPXIAzuX-6ZrotkWvB5gB',
+                    production: 'AZiHxAuheikQ91z5ddQFFt3IL_AYatANvyGTFoscbLhQik6OMOcpjcRSbEdsnA8mBGWfrFGCb9i0pOVd'
+                },
+                // Customize button (optional)
+                style: {
+                    size: 'responsive',
+                    color: 'silver',
+                    shape: 'rect',
+                    label: 'pay',
+                    tagline: 'true',
+                    fundingicons: 'true',
+                    layout: 'horizontal'
+                },
+                funding: {
+                    allowed: [paypal.FUNDING.CARD, paypal.FUNDING.CREDIT]
+                },
+                // Show the buyer a 'Pay Now' button in the checkout flow
+                commit: true,
+                experience: {
+                    input_fields: {
+                        no_shipping: 1      //no preguntar por la direccion de entrega
+                    }
+                },
+                // Wait for the PayPal button to be clicked
+                payment: function (actions, trans) {
+                    console.log('payment actions', actions);
+                    console.log('payment trans', trans);
+                    return actions.payment.create({
+                        payment: {
+                            transactions: [
+                                {
+                                    amount: {
+                                        total: total,
+                                        currency: 'AUD',
+                                        details: {
+                                            subtotal: subtotal,
+                                            tax: tax,
+                                            shipping: shipping,
+                                            handling_fee: rounding,
+                                            insurance: 0
+                                        }
+                                    },
+                                    description: 'Flowerhub Click Buy Delivered.',
+                                    custom: 'Blazor test',
+                                    //item_list: {
+                                    //    items: shopping
+                                    //}
+                                }],
+                            note_to_payer: RoundingNote
+                        }
+                    });
+                },
+                // Wait for the payment to be authorized by the customer
+                onAuthorize: function (data, actions) {
+                    console.log('onAuthorize data', data);
+                    console.log('onAuthorize actions', actions);
+                    return actions.payment.execute().then(PayPalResponse);
+                },
+                onCancel: function (data, actions) {
+                    console.log('onCancel data', data);
+                    console.log('onCancel actions', actions);
+                },
+                onError: function (res) {
+                    console.log('sergi', res);
+                }
+            }, '#paypal-button-container');
+
+        }
+
+        let RoundingNote = 'Thanks';
+        let rounding;
+
+        let subtotal =10;
+        let tax = 1;
+        let shipping = 10;
+        let total = subtotal + tax + shipping;
+
+        let trans = {
+            total: total,
+            currency: 'AUD',
+            details: {
+                subtotal: subtotal,
+                tax: tax,
+                shipping: shipping,
+                handling_fee: rounding,
+                insurance: 0
+            }
+        };
+
+        function PayPalResponse(response) {
+            PaymentTracker('PayPalResponse Response: ' + response);
+            if (response.state) {
+                console.log(response);
+                //SendTransaction(response);
+            }
+            else {
+                sms('PAYPAL', 'Sorry. Transaction not aproved by PAYPAL. Please try with other payment type.');
+            }
+        }
+    </script>
 </body>
 
 </html>
