@@ -6,9 +6,10 @@
 <p>@Messages</p>
 
 <InputFileExtended @ref="UploadFiles"                   
-                   TargetToPostFile="files/a/disco" ShowPreview="true" IsImage="true" ButtonShow="show"
-                   OnSave="Guardar" OnError="Error" OnUploadedFile="UploadFile" OnUploadComleted="Completed" MultiFile="true">
-    <ButtonContent>Guarda a Disco</ButtonContent>
+                   TargetToPostFile="files/a/disco" ShowPreview="false" IsImage="true" ButtonShow="show"
+                   OnSave="Guardar" OnError="Error" OnUploadedFile="UploadFile" OnUploadComleted="Completed" 
+                   MultiFile="false">
+    <ButtonContent>Guardar</ButtonContent>
 </InputFileExtended>
 
 <ul class="gallery">
@@ -54,7 +55,7 @@
     List<FileStore> Files;
     InputFileExtended UploadFiles;
 
-    async void Guardar(HttpResponseMessage result)
+    void Guardar(HttpResponseMessage result)
     {
         if (result.IsSuccessStatusCode)
         {
