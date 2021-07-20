@@ -7,11 +7,11 @@
 
 <p>@Messages</p>
 
-<InputFileExtended @ref="UploadFiles"
-                   TargetToPostFile="files/a/disco" ShowPreview="true" IsImage="true" ButtonShow="show" CanDropFiles="true"
-                   OnSave="Guardar" InputFileTypes="image/png"
-                   OnError="Error" OnUploadedFile="UploadFile" OnUploadComleted="Completed" MultiFile="true">
-    <ButtonContent>Guarda a Disco</ButtonContent>
+<InputFileExtended @ref="UploadFiles"                   
+                   TargetToPostFile="files/a/disco" ShowPreview="false" IsImage="true" ButtonShow="show"
+                   OnSave="Guardar" OnError="Error" OnUploadedFile="UploadFile" OnUploadComleted="Completed" 
+                   MultiFile="false">
+    <ButtonContent>Guardar</ButtonContent>
 </InputFileExtended>
 
 
